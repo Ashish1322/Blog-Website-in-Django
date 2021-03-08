@@ -1,0 +1,140 @@
+{% extends 'home/basic.html' %}
+{% block title %}Blogpost{% endblock %}
+{% block blogacitve %} active {% endblock blogacitve %}
+{% block body %}
+{% load extras %}
+
+<!-- Showing the content of the post -->
+<div class="container my-3">
+  <div class="row">
+    <div class="col-md-8">
+      <article class="blog-post">
+        <h2 class="blog-post-title">{{post.title}}</h2>
+        <p class="blog-post-meta">{{post.timestamp}} (<span>{{post.views}}</span>) </p>
+        <p>{{post.content|safe}}</p>
+      </article>
+    </div>
+    <div class="col-md-4">
+      <div class="p-4 mb-3 bg-light rounded">
+        <h4 class="fst-italic">About</h4>
+        <p class="mb-0">In this blog you will see the articles related to the how we can master the coding related
+          skills and how we can developethe skills which are required for the freelacing. Heavy is the head that
+          <em>wears the crown</em>. Yes, we make angels cry, raining.</p>
+      </div>
+      <div class="p-4">
+        <h4 class="fst-italic">Follow us</h4>
+        <ol class="list-unstyled">
+          <li><a href="#">GitHub</a></li>
+          <li><a href="#">Twitter</a></li>
+          <li><a href="#">Facebook</a></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- Latest Posts  -->
+  <div class="container">
+    <div class="row">
+      <h3>Latest Posts</h3>
+      {% for post in latest %}
+      <div class="col-md-3">
+        <div class="card" style="width: 16rem;">
+          <div class="card-body">
+            <h5 class="card-title">{{post.title}}</h5>
+            <h6 class="card-subtitle mb-2 text-muted"><strong>{{post.category}} </strong> {{post.timestamp}}</h6>
+            <p class="card-text">{{post.content|slice:97}}...</p>
+            <a href="http://127.0.0.1:8000/blog/{{post.sno}}" class="btn btn-primary">Read now</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+
+    </div>
+  </div>
+
+  <!-- If user is login then only show comments options -->
+  {% if user.is_authenticated %}
+  <div class="container">
+    <h2>comments({{number}})</h2>
+    <!-- Comment form -->
+    <form action="http://127.0.0.1:8000/blog/postcomment/" method="POST">
+      {% csrf_token %}
+      <div class="mb-3">
+        <input type="text" class="form-control" id="comment" name="comment" aria-describedby="emailHelp"
+          placeholder="Enter your commment here" required>
+      </div>
+      <input type="hidden" name="postid" value="{{post.sno}}">
+      <input type="hidden" name="serialnoreply" value=" ">
+      <!--For knowing weather a comment or reply in comment it is empty and in reply it is serial no of parent comment-->
+      <button type="submit" class="btn btn-primary">Comment</button>
+    </form>
+
+      <!-- showing the comments from database  -->
+    {% for comment in comments %}
+    <div class="row my-2">
+      <div class="col-md-1">
+        {% load static %}
+        <img src="{% static 'user.png' %}" alt="My image" width="50" height="50">
+      </div>
+
+      <div class="col-md-11"><b>{{comment.user.first_name}}</b> at {{comment.timestamp}}
+        <div>
+          {{comment.comment}}
+        </div>
+        <div class="reply mx-0"> <!--Reply butoon-->
+          <button class="badge bg-info text-dark btn" type="button" data-bs-toggle="collapse"
+            data-bs-target="#replybox{{comment.sno}}" aria-expanded="false" aria-controls="replybox{{comment.sno}}">
+            Reply
+          </button>
+
+          <div class="collapse my-2" id="replybox{{comment.sno}}">
+            <!-- Reply Form -->
+            <form action="http://127.0.0.1:8000/blog/postcomment/" method="POST">
+              {% csrf_token %}
+              <div class="mb-3">
+                <input type="text" class="form-control" id="comment" name="reply" aria-describedby="emailHelp"
+                  placeholder="Enter your Reply here" required>
+              </div>
+              <input type="hidden" name="postid" value="{{post.sno}}">
+              <input type="hidden" name="serialnoreply" value="{{comment.sno}}">
+              <button type="submit" class="badge bg-warning text-dark">Post Reply</button>
+            </form>
+          </div>
+          <!-- Showing the reply by use of filter created named get_val -->
+          <div class="reply  my-2">
+            {% for reply in replyDict|get_val:comment.sno %}
+            <div class="row">
+              <div class="col-md-1 my-1">
+                <img src="{% static 'reply.png' %}" alt="My image" width="30" height="30">
+              </div>
+              <div class="col-md-11">
+                <b>{{reply.user.first_name}}</b>at {{reply.timestamp}}<br>
+                {{reply.comment}}
+              </div>
+            </div>
+
+            <br>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+
+    <!-- Else user is not login then restricting to comment by disabled input tag -->
+    {%else%}
+    <div class="container">
+      <h2>comments</h2>
+      <form>
+        <div class="mb-3">
+          <input type="text" class="form-control" id="comment" aria-describedby="emailHelp"
+            placeholder="Please Login to Post and See the Comments" required disabled>
+        </div>
+      </form>
+    </div>
+    {%endif%}
+  </div>
+
+  {% endblock body %}
